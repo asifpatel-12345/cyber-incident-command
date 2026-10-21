@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS-X // Cyber Incident Command Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Orbitron & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,700;1,400&family=Orbitron:wght@400;600;800;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#080c14',
+                            card: '#0f172a',
+                            border: '#1e293b',
+                            neonCyan: '#00f2fe',
+                            neonBlue: '#4facfe',
+                            neonPurple: '#7928ca',
+                            neonRed: '#ff2a5f',
+                            neonGreen: '#00ff87',
+                            neonYellow: '#f59e0b',
+                        }
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Neon Glows & Glassmorphism Styling */
+        body {
+            background-color: #060911;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(0, 242, 254, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(121, 40, 202, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.5) 0px, transparent 100%);
+            background-attachment: fixed;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-panel-glow {
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.15), inset 0 0 15px rgba(0, 242, 254, 0.05);
+        }
+
+        .neon-border-cyan {
+            border-color: rgba(0, 242, 254, 0.5);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+
+        .neon-text-cyan {
+            text-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
+        }
+
+        .neon-text-red {
+            text-shadow: 0 0 8px rgba(255, 42, 95, 0.6);
+        }
+
+        .neon-text-green {
+            text-shadow: 0 0 8px rgba(0, 255, 135, 0.6);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f2fe;
+        }
+
+        /* Radar Pulse Animation */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .radar-pulse {
+            animation: pulse-ring 3s infinite ease-in-out;
+        }
+
+        /* Scanline Overlay */
+        .scanline {
+            position: relative;
+            overflow: hidden;
+        }
+        .scanline::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-black">
+
+    <!-- TOP HEADER / NAVBAR -->
+    <header class="glass-panel sticky top-0 z-50 border-b border-slate-800/80 px-4 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+        <!-- Logo & Title -->
+        <div class="flex items-center space-x-3">
+            <div class="relative flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 p-0.5 shadow-lg shadow-cyan-500/30">
+                <div class="w-full h-full bg-slate-950 rounded-[7px] flex items-center justify-center">
+                    <i class="fa-solid fa-shield-halved text-cyan-400 text-xl radar-pulse"></i>
+                </div>
+            </div>
+            <div>
+                <h1 class="font-orbitron font-extrabold text-lg sm:text-xl tracking-wider text-white flex items-center gap-2">
+                    AEGIS-X <span class="text-xs px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-500/30 font-mono">SOC v4.2</span>
+                </h1>
+                <p class="text-xs text-slate-400 font-mono flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    SECURE COMMAND NODE // DEFCON 3
+                </p>
+            </div>
+        </div>
+
+        <!-- Global Status & Live Time -->
+        <div class="flex items-center space-x-4 sm:space-x-6 text-xs sm:text-sm font-mono">
+            <div class="hidden md:flex flex-col text-right">
+                <span class="text-slate-400">SYSTEM TIME (UTC)</span>
+                <span id="live-clock" class="text-cyan-400 font-bold">00:00:00 UTC</span>
+            </div>
+
+            <!-- Mute/Sound Toggle -->
+            <button id="sound-toggle" onclick="toggleAudio()" class="p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:text-cyan-400 hover:border-cyan-500 transition-all">
+                <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+
+            <!-- Quick Action: Emergency Lockdown -->
+            <button onclick="triggerLockdown()" class="px-4 py-2 rounded-lg bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600 hover:text-white transition-all font-semibold flex items-center gap-2 shadow-lg shadow-red-900/30">
+                <i class="fa-solid fa-triangle-exclamation animate-bounce"></i>
+                <span class="hidden sm:inline">LOCKDOWN</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="flex-1 p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1800px] w-full mx-auto">
+
+        <!-- LEFT COLUMN: Metrics, Live Map/Threat Feed & Active Incidents (8 Cols) -->
+        <div class="lg:col-span-8 flex flex-col gap-6">
+
+            <!-- METRICS CARDS GRID -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <!-- Card 1 -->
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-l-cyan-400 flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-mono">
+                        <span>ACTIVE THREATS</span>
+                        <i class="fa-solid fa-bug text-cyan-400"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="metric-threats" class="text-2xl sm:text-3xl font-orbitron font-bold text-white">14</span>
+                        <span class="text-xs text-red-400 font-mono"><i class="fa-solid fa-arrow-up"></i> +3</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+                        <div class="bg-cyan-400 h-full rounded-full" style="width: 70%"></div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-l-red-500 flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-mono">
+                        <span>CRITICAL ALERTS</span>
+                        <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="metric-critical" class="text-2xl sm:text-3xl font-orbitron font-bold text-white">03</span>
+                        <span class="text-xs text-emerald-400 font-mono"><i class="fa-solid fa-arrow-down"></i> -1</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+                        <div class="bg-red-500 h-full rounded-full" style="width: 30%"></div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-l-emerald-400 flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-mono">
+                        <span>BLOCKED ATTACKS</span>
+                        <i class="fa-solid fa-shield-virus text-emerald-400"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span id="metric-blocked" class="text-2xl sm:text-3xl font-orbitron font-bold text-white">1,284</span>
+                        <span class="text-xs text-emerald-400 font-mono">+12%</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+                        <div class="bg-emerald-400 h-full rounded-full" style="width: 88%"></div>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-l-purple-500 flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-mono">
+                        <span>SYSTEM HEALTH</span>
+                        <i class="fa-solid fa-server text-purple-400"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline gap-2">
+                        <span class="text-2xl sm:text-3xl font-orbitron font-bold text-white">99.4%</span>
+                        <span class="text-xs text-slate-400 font-mono">STABLE</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+                        <div class="bg-purple-500 h-full rounded-full" style="width: 99.4%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LIVE THREAT VECTOR RADAR / FEED -->
+            <div class="glass-panel rounded-xl p-5 border border-slate-800 flex flex-col gap-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h2 class="font-orbitron text-sm font-semibold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-satellite-dish text-cyan-400"></i>
+                        GLOBAL THREAT INTEL FEED (LIVE SIMULATION)
+                    </h2>
+                    <span class="text-xs font-mono bg-cyan-950 text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded">
+                        AUTO-SYNC
+                    </span>
+                </div>
+
+                <!-- Live Stream Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left font-mono text-xs">
+                        <thead>
+                            <tr class="text-slate-500 border-b border-slate-800/60 pb-2">
+                                <th class="pb-2">TIME</th>
+                                <th class="pb-2">SOURCE IP</th>
+                                <th class="pb-2">TARGET VECTOR</th>
+                                <th class="pb-2">ATTACK TYPE</th>
+                                <th class="pb-2">SEVERITY</th>
+                                <th class="pb-2">ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="threat-feed-body" class="divide-y divide-slate-800/40 text-slate-300">
+                            <!-- Rows dynamically populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- INCIDENT MANAGEMENT COMMAND CENTER -->
+            <div class="glass-panel rounded-xl p-5 border border-slate-800 flex flex-col gap-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                    <h2 class="font-orbitron text-sm font-semibold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-purple-400"></i>
+                        ACTIVE INCIDENT QUEUE & INVESTIGATION
+                    </h2>
+                    <button onclick="openNewIncidentModal()" class="px-3 py-1.5 rounded-md bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold font-mono text-xs transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> LOG NEW INCIDENT
+                    </button>
+                </div>
+
+                <!-- Incidents List Container -->
+                <div id="incident-list" class="flex flex-col gap-3">
+                    <!-- Dynamic Incidents Rendered Here -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Security Arsenal Tools & Cyber Terminal (4 Cols) -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+
+            <!-- QUICK SECURITY TOOLS TABS -->
+            <div class="glass-panel rounded-xl p-5 border border-slate-800 flex flex-col gap-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h2 class="font-orbitron text-sm font-semibold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-toolbox text-emerald-400"></i>
+                        TACTICAL TOOLKIT
+                    </h2>
+                </div>
+
+                <!-- Tool Tabs Navigation -->
+                <div class="flex bg-slate-900/80 p-1 rounded-lg font-mono text-xs gap-1 border border-slate-800">
+                    <button onclick="switchTool('ip')" id="tab-ip" class="flex-1 py-1.5 rounded text-center transition-all bg-cyan-500/20 text-cyan-300 font-bold">IP Scanner</button>
+                    <button onclick="switchTool('hash')" id="tab-hash" class="flex-1 py-1.5 rounded text-center transition-all text-slate-400 hover:text-white">Hash Gen</button>
+                    <button onclick="switchTool('phish')" id="tab-phish" class="flex-1 py-1.5 rounded text-center transition-all text-slate-400 hover:text-white">Phish Check</button>
+                </div>
+
+                <!-- TOOL 1: IP & PORT SCANNER SIMULATOR -->
+                <div id="tool-ip-content" class="flex flex-col gap-3 font-mono text-xs">
+                    <label class="text-slate-400">Target IP or Domain:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="ip-input" value="192.168.1.105" class="w-full bg-slate-900/90 border border-slate-700 rounded px-3 py-2 text-cyan-300 focus:outline-none focus:border-cyan-500">
+                        <button onclick="runPortScan()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-black font-bold rounded transition-all">SCAN</button>
+                    </div>
+                    <div id="ip-results" class="hidden bg-slate-950 p-3 rounded border border-slate-800 text-slate-300 space-y-1">
+                        <p class="text-slate-500">// SCAN RESULT:</p>
+                        <p>Status: <span class="text-emerald-400">ONLINE</span></p>
+                        <p>Port 22 (SSH): <span class="text-emerald-400">OPEN</span></p>
+                        <p>Port 80 (HTTP): <span class="text-emerald-400">OPEN</span></p>
+                        <p>Port 443 (HTTPS): <span class="text-emerald-400">OPEN</span></p>
+                        <p>Port 3389 (RDP): <span class="text-red-400">EXPOSED</span></p>
+                        <p class="text-xs text-yellow-400 mt-1"><i class="fa-solid fa-triangle-exclamation"></i> Threat Level: Medium Risk</p>
+                    </div>
+                </div>
+
+                <!-- TOOL 2: HASH GENERATOR -->
+                <div id="tool-hash-content" class="hidden flex flex-col gap-3 font-mono text-xs">
+                    <label class="text-slate-400">Input String / Payload:</label>
+                    <input type="text" id="hash-input" placeholder="Type text to hash..." oninput="generateHashes()" class="bg-slate-900/90 border border-slate-700 rounded px-3 py-2 text-cyan-300 focus:outline-none focus:border-cyan-500">
+                    <div class="space-y-2 mt-1">
+                        <div>
+                            <span class="text-slate-500 block">SHA-256 Mock Hash:</span>
+                            <div class="bg-slate-950 p-2 rounded text-slate-300 break-all border border-slate-800 text-[10px]" id="hash-sha256">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOOL 3: PHISHING THREAT ANALYZER -->
+                <div id="tool-phish-content" class="hidden flex flex-col gap-3 font-mono text-xs">
+                    <label class="text-slate-400">Inspect Suspicious URL:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="url-input" placeholder="https://paypaI-security-update.com" class="w-full bg-slate-900/90 border border-slate-700 rounded px-3 py-2 text-cyan-300 focus:outline-none focus:border-cyan-500">
+                        <button onclick="analyzeUrl()" class="px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded transition-all">ANALYZE</button>
+                    </div>
+                    <div id="phish-results" class="hidden bg-slate-950 p-3 rounded border border-slate-800 space-y-1">
+                        <!-- Dynamic Phish Results -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TERMINAL LOG CONSOLE (Interactive) -->
+            <div class="glass-panel rounded-xl p-5 border border-slate-800 flex flex-col gap-3 scanline flex-1 min-h-[320px]">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        <span class="font-mono text-xs text-slate-400 ml-2">AEGIS_CLI_v2.0</span>
+                    </div>
+                    <button onclick="clearTerminal()" class="text-xs text-slate-500 hover:text-slate-300 font-mono">CLEAR</button>
+                </div>
+
+                <!-- Terminal Output Box -->
+                <div id="terminal-output" class="font-mono text-xs text-emerald-400 flex-1 overflow-y-auto space-y-1 max-h-[220px] pr-1">
+                    <p class="text-slate-500">[SYSTEM INIT] Aegis-X Incident Command System Ready.</p>
+                    <p class="text-slate-500">[INFO] Listening for incoming telemetry on port 8443...</p>
+                </div>
+
+                <!-- Terminal Command Input -->
+                <div class="flex items-center gap-2 pt-2 border-t border-slate-800 font-mono text-xs">
+                    <span class="text-cyan-400 font-bold">&gt;</span>
+                    <input type="text" id="terminal-input" placeholder="Type 'help', 'status', 'isolate'..." onkeydown="handleTerminalCommand(event)" class="w-full bg-transparent text-cyan-300 focus:outline-none">
+                </div>
+            </div>
+
+            <!-- OPERATOR QUICK NOTES (LocalStorage) -->
+            <div class="glass-panel rounded-xl p-5 border border-slate-800 flex flex-col gap-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h2 class="font-orbitron text-xs font-semibold text-slate-300 flex items-center gap-2">
+                        <i class="fa-solid fa-note-sticky text-yellow-400"></i> SOC SHIFT NOTES
+                    </h2>
+                    <span class="text-[10px] font-mono text-slate-500">AUTO-SAVED</span>
+                </div>
+                <textarea id="shift-notes" placeholder="Write handover notes, suspect IPs, or investigation bookmarks..." oninput="saveNotes()" class="w-full h-24 bg-slate-900/80 border border-slate-800 rounded p-2.5 text-xs font-mono text-slate-300 focus:outline-none focus:border-cyan-500 resize-none"></textarea>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- NEW INCIDENT MODAL -->
+    <div id="incident-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 p-4">
+        <div class="glass-panel bg-slate-950 border border-slate-800 rounded-xl max-w-md w-full p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-orbitron font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-cyan-400"></i> LOG SECURITY INCIDENT
+                </h3>
+                <button onclick="closeNewIncidentModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="space-y-3 font-mono text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1">INCIDENT TITLE</label>
+                    <input type="text" id="modal-title" placeholder="e.g. Unauthorized Access Attempt" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-cyan-500">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">SEVERITY LEVEL</label>
+                    <select id="modal-severity" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-cyan-500">
+                        <option value="CRITICAL">CRITICAL (Red)</option>
+                        <option value="HIGH">HIGH (Orange)</option>
+                        <option value="MEDIUM" selected>MEDIUM (Yellow)</option>
+                        <option value="LOW">LOW (Blue)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">TARGET HOST / VECTOR</label>
+                    <input type="text" id="modal-target" placeholder="e.g. Auth-Server-01 (10.0.4.12)" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white focus:outline-none focus:border-cyan-500">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-3 border-t border-slate-800">
+                <button onclick="closeNewIncidentModal()" class="px-4 py-2 rounded bg-slate-800 text-slate-300 font-mono text-xs hover:bg-slate-700">CANCEL</button>
+                <button onclick="submitNewIncident()" class="px-4 py-2 rounded bg-cyan-500 text-slate-950 font-bold font-mono text-xs hover:bg-cyan-400">DISPATCH INCIDENT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIO SOUND EFFECTS (SYNTHESIZED WEB AUDIO API) -->
+    <script>
+        // Web Audio API Sound Generator for Futuristic Cyber Effects
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playBeep(freq = 800, type = 'sine', duration = 0.1) {
+                if (this.muted) return;
+                this.init();
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+
+            playAlarm() {
+                if (this.muted) return;
+                this.playBeep(440, 'sawtooth', 0.2);
+                setTimeout(() => this.playBeep(880, 'sawtooth', 0.2), 150);
+            }
+        }
+
+        const audio = new SoundFX();
+
+        function toggleAudio() {
+            audio.muted = !audio.muted;
+            const icon = document.getElementById('sound-icon');
+            if (audio.muted) {
+                icon.className = "fa-solid fa-volume-xmark text-red-400";
+            } else {
+                icon.className = "fa-solid fa-volume-high text-cyan-400";
+                audio.playBeep(1000, 'sine', 0.1);
+            }
+        }
+    </script>
+
+    <!-- CORE DASHBOARD LOGIC & INTERACTION SCRIPT -->
+    <script>
+        // State Management & LocalStorage setup
+        let incidents = JSON.parse(localStorage.getItem('aegis_incidents')) || [
+            { id: 'INC-8902', title: 'Brute Force Attack Detected', severity: 'CRITICAL', target: 'VPN-Gateway-East', status: 'INVESTIGATING', timestamp: '10 mins ago' },
+            { id: 'INC-8901', title: 'SQL Injection Attempt', severity: 'HIGH', target: 'Prod-DB-Cluster', status: 'MITIGATED', timestamp: '34 mins ago' },
+            { id: 'INC-8899', title: 'Suspicious Admin Login', severity: 'MEDIUM', target: 'Domain-Controller-01', status: 'OPEN', timestamp: '1 hr ago' }
+        ];
+
+        // System Clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toUTCString().split(' ')[4] + ' UTC';
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Save Shift Notes locally
+        function saveNotes() {
+            const notes = document.getElementById('shift-notes').value;
+            localStorage.setItem('aegis_notes', notes);
+        }
+
+        function loadSavedData() {
+            const savedNotes = localStorage.getItem('aegis_notes');
+            if (savedNotes) {
+                document.getElementById('shift-notes').value = savedNotes;
+            }
+            renderIncidents();
+        }
+
+        // Render Active Incident List
+        function renderIncidents() {
+            const container = document.getElementById('incident-list');
+            container.innerHTML = '';
+
+            incidents.forEach((inc, index) => {
+                let badgeColor = 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40';
+                if (inc.severity === 'CRITICAL') badgeColor = 'bg-red-500/20 text-red-400 border-red-500/40';
+                if (inc.severity === 'HIGH') badgeColor = 'bg-orange-500/20 text-orange-400 border-orange-500/40';
+                if (inc.severity === 'LOW') badgeColor = 'bg-blue-500/20 text-blue-400 border-blue-500/40';
+
+                let statusColor = 'text-cyan-400';
+                if (inc.status === 'MITIGATED') statusColor = 'text-emerald-400';
+                if (inc.status === 'INVESTIGATING') statusColor = 'text-yellow-400';
+
+                const card = document.createElement('div');
+                card.className = "bg-slate-900/80 border border-slate-800 rounded-lg p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:border-slate-700 transition-all";
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-xs font-bold text-white">${inc.id}</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${badgeColor}">${inc.severity}</span>
+                            <span class="text-xs text-slate-500 font-mono">${inc.timestamp}</span>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-200">${inc.title}</p>
+                        <p class="text-xs font-mono text-slate-400"><i class="fa-solid fa-server text-slate-500"></i> ${inc.target}</p>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <span class="text-xs font-mono ${statusColor} font-bold mr-2">${inc.status}</span>
+                        <button onclick="toggleIncidentStatus(${index})" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 border border-slate-700">
+                            UPDATE STATUS
+                        </button>
+                        <button onclick="deleteIncident(${index})" class="p-1.5 rounded bg-slate-800 hover:bg-red-900/50 text-slate-400 hover:text-red-400 text-xs">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            localStorage.setItem('aegis_incidents', JSON.stringify(incidents));
+        }
+
+        function toggleIncidentStatus(index) {
+            audio.playBeep(600, 'sine', 0.08);
+            const statuses = ['OPEN', 'INVESTIGATING', 'MITIGATED'];
+            let current = statuses.indexOf(incidents[index].status);
+            incidents[index].status = statuses[(current + 1) % statuses.length];
+            renderIncidents();
+            logTerminal(`Updated ${incidents[index].id} status to ${incidents[index].status}`);
+        }
+
+        function deleteIncident(index) {
+            audio.playBeep(300, 'sawtooth', 0.1);
+            const id = incidents[index].id;
+            incidents.splice(index, 1);
+            renderIncidents();
+            logTerminal(`Incident ${id} purged from registry.`);
+        }
+
+        // Modal Controls
+        function openNewIncidentModal() {
+            document.getElementById('incident-modal').classList.remove('hidden');
+            document.getElementById('incident-modal').classList.add('flex');
+        }
+
+        function closeNewIncidentModal() {
+            document.getElementById('incident-modal').classList.add('hidden');
+            document.getElementById('incident-modal').classList.remove('flex');
+        }
+
+        function submitNewIncident() {
+            const title = document.getElementById('modal-title').value.trim();
+            const severity = document.getElementById('modal-severity').value;
+            const target = document.getElementById('modal-target').value.trim() || 'Internal Subnet';
+
+            if (!title) return alert('Please enter an incident title.');
+
+            const newInc = {
+                id: `INC-${Math.floor(1000 + Math.random() * 9000)}`,
+                title: title,
+                severity: severity,
+                target: target,
+                status: 'OPEN',
+                timestamp: 'Just now'
+            };
+
+            incidents.unshift(newInc);
+            renderIncidents();
+            closeNewIncidentModal();
+            audio.playAlarm();
+            logTerminal(`[ALERT] New ${severity} incident logged: ${title}`);
+            
+            // Clear Modal
+            document.getElementById('modal-title').value = '';
+            document.getElementById('modal-target').value = '';
+        }
+
+        // Emergency Lockdown Trigger
+        function triggerLockdown() {
+            audio.playAlarm();
+            logTerminal(`[CRITICAL] EMERGENCY LOCKDOWN INITIATED BY OPERATOR!`);
+            logTerminal(`[CRITICAL] Firewalls enforcing Default-Deny rule on all perimeter ports.`);
+            alert("⚠️ SYSTEM LOCKDOWN ENFORCED\n\nAll non-essential network interfaces have been isolated.");
+        }
+
+        // Simulated Threat Feed Generator
+        const ips = ['185.220.101.4', '45.154.255.87', '193.42.11.12', '103.251.167.20', '192.168.1.45'];
+        const vectors = ['AUTH-GATEWAY', 'API-ENDPOINT-V2', 'DB-PRIMARY', 'K8S-NODE-03', 'SMTP-SERVER'];
+        const types = ['DDoS SynFlood', 'BruteForce SSH', 'XSS Injection', 'Ransomware Beacon', 'Port Scan (Nmap)'];
+        const severities = ['HIGH', 'CRITICAL', 'MEDIUM', 'LOW'];
+
+        function addLiveThreat() {
+            const tbody = document.getElementById('threat-feed-body');
+            const ip = ips[Math.floor(Math.random() * ips.length)];
+            const vector = vectors[Math.floor(Math.random() * vectors.length)];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const sev = severities[Math.floor(Math.random() * severities.length)];
+            const time = new Date().toLocaleTimeString();
+
+            let badge = 'text-yellow-400 bg-yellow-950/60';
+            if (sev === 'CRITICAL') badge = 'text-red-400 bg-red-950/60';
+            if (sev === 'HIGH') badge = 'text-orange-400 bg-orange-950/60';
+
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-800/30 transition-all";
+            tr.innerHTML = `
+                <td class="py-2 text-slate-400">${time}</td>
+                <td class="py-2 text-cyan-300">${ip}</td>
+                <td class="py-2">${vector}</td>
+                <td class="py-2 text-slate-200">${type}</td>
+                <td class="py-2"><span class="px-1.5 py-0.5 rounded text-[10px] ${badge}">${sev}</span></td>
+                <td class="py-2">
+                    <button onclick="blockIP('${ip}')" class="px-2 py-0.5 rounded bg-red-950/80 border border-red-800 hover:bg-red-800 text-red-200 text-[10px]">
+                        BLOCK
+                    </button>
+                </td>
+            `;
+
+            tbody.insertBefore(tr, tbody.firstChild);
+            if (tbody.children.length > 6) {
+                tbody.removeChild(tbody.lastChild);
+            }
+        }
+
+        setInterval(addLiveThreat, 4000);
+
+        function blockIP(ip) {
+            audio.playBeep(900, 'square', 0.1);
+            logTerminal(`[FIREWALL] IP address ${ip} added to Blackhole rule.`);
+        }
+
+        // Terminal Log Functionality
+        function logTerminal(message) {
+            const out = document.getElementById('terminal-output');
+            const p = document.createElement('p');
+            p.innerText = `> ${message}`;
+            out.appendChild(p);
+            out.scrollTop = out.scrollHeight;
+        }
+
+        function clearTerminal() {
+            document.getElementById('terminal-output').innerHTML = '';
+        }
+
+        function handleTerminalCommand(e) {
+            if (e.key === 'Enter') {
+                const cmd = e.target.value.trim().toLowerCase();
+                e.target.value = '';
+                if (!cmd) return;
+
+                logTerminal(`user@aegis:~# ${cmd}`);
+
+                if (cmd === 'help') {
+                    logTerminal(`Available Commands: help, status, isolate, scan, clear, lockdown`);
+                } else if (cmd === 'status') {
+                    logTerminal(`System Status: OK | Active Threats: ${incidents.length} | Firewalls: ACTIVE`);
+                } else if (cmd === 'isolate') {
+                    logTerminal(`[COMMAND EXEC] Isolate perimeter host... Host isolated successfully.`);
+                } else if (cmd === 'clear') {
+                    clearTerminal();
+                } else if (cmd === 'lockdown') {
+                    triggerLockdown();
+                } else {
+                    logTerminal(`Command not recognized: '${cmd}'. Type 'help' for manual.`);
+                }
+            }
+        }
+
+        // Tool Switching
+        function switchTool(tool) {
+            audio.playBeep(700, 'sine', 0.05);
+            ['ip', 'hash', 'phish'].forEach(t => {
+                document.getElementById(`tool-${t}-content`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = "flex-1 py-1.5 rounded text-center transition-all text-slate-400 hover:text-white";
+            });
+
+            document.getElementById(`tool-${tool}-content`).classList.remove('hidden');
+            document.getElementById(`tab-${tool}`).className = "flex-1 py-1.5 rounded text-center transition-all bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30";
+        }
+
+        function runPortScan() {
+            audio.playBeep(1200, 'sawtooth', 0.15);
+            document.getElementById('ip-results').classList.remove('hidden');
+            logTerminal(`Port scan completed for target ${document.getElementById('ip-input').value}`);
+        }
+
+        function generateHashes() {
+            const str = document.getElementById('hash-input').value;
+            // Simple deterministic fake hash visualizer for speed
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = (hash << 5) - hash + str.charCodeAt(i);
+                hash |= 0;
+            }
+            const fakeHex = Math.abs(hash).toString(16).padStart(8, '0');
+            document.getElementById('hash-sha256').innerText = str ? `${fakeHex}a89c92f1b40294e101859c2180512f10928a${fakeHex}` : 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+        }
+
+        function analyzeUrl() {
+            const url = document.getElementById('url-input').value.toLowerCase();
+            const res = document.getElementById('phish-results');
+            res.classList.remove('hidden');
+
+            if (url.includes('paypai') || url.includes('login') || url.includes('verify') || url.includes('-')) {
+                res.innerHTML = `
+                    <p class="text-red-400 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> HIGH PHISHING RISK DETECTED</p>
+                    <p class="text-slate-400 text-[11px]">Reason: Typo-squatting / Suspicious domain keywords found.</p>
+                `;
+            } else {
+                res.innerHTML = `
+                    <p class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> URL LOOKS CLEAN</p>
+                    <p class="text-slate-400 text-[11px]">No immediate typosquatting or blacklisted patterns found.</p>
+                `;
+            }
+        }
+
+        // Initialize saved data on start
+        window.onload = function() {
+            loadSavedData();
+            addLiveThreat();
+        }
+    </script>
+</body>
+</html>
